@@ -175,9 +175,22 @@
 }
 
 - (void)getLoginStatus:(CDVInvokedUrlCommand *)command {
-    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                                  messageAsDictionary:[self responseObject]];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    
+    [FBRequestConnection startForMeWithCompletionHandler:
+     ^(FBRequestConnection *connection, id <FBGraphUser>user, NSError *error) {
+         if (!error) {
+             self.userid = [user objectForKey:@"id"];
+             
+             // Send the plugin result. Wait for a successful fetch of user info.
+             if (command.callbackId) {
+                 CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                               messageAsDictionary:[self responseObject]];
+                 [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+             }
+         } else {
+             self.userid = @"";
+         }
+     }];
 }
 
 - (void)getAccessToken:(CDVInvokedUrlCommand *)command {
