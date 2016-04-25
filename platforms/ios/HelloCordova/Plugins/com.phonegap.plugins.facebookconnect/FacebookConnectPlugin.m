@@ -176,21 +176,27 @@
 
 - (void)getLoginStatus:(CDVInvokedUrlCommand *)command {
     
-    [FBRequestConnection startForMeWithCompletionHandler:
-     ^(FBRequestConnection *connection, id <FBGraphUser>user, NSError *error) {
-         if (!error) {
-             self.userid = [user objectForKey:@"id"];
-             
-             // Send the plugin result. Wait for a successful fetch of user info.
-             if (command.callbackId) {
-                 CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                                               messageAsDictionary:[self responseObject]];
-                 [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if (FBSession.activeSession.isOpen) {
+        [FBRequestConnection startForMeWithCompletionHandler:
+         ^(FBRequestConnection *connection, id <FBGraphUser>user, NSError *error) {
+             if (!error) {
+                 self.userid = [user objectForKey:@"id"];
+                 
+                 // Send the plugin result. Wait for a successful fetch of user info.
+                 if (command.callbackId) {
+                     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                                   messageAsDictionary:[self responseObject]];
+                     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+                 }
+             } else {
+                 self.userid = @"";
              }
-         } else {
-             self.userid = @"";
-         }
-     }];
+         }];
+    }else{
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                      messageAsDictionary:[self responseObject]];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
 }
 
 - (void)getAccessToken:(CDVInvokedUrlCommand *)command {
